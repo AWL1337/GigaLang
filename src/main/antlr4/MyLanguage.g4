@@ -1,9 +1,5 @@
 grammar MyLanguage;
 
-@header {
-    package org.itmo.antlr;
-}
-
 prog: statement+ ;
 statement: printStatement
          | varDeclaration
