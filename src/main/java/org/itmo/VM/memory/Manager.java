@@ -23,7 +23,7 @@ public class Manager {
     private final Long MAX_TRIGGER_OBJECTS = 1000L;
 
 
-
+    // создать или изменить переменную по имени
     public void allocate(String name, MemoryObject object) {
         var scope = getCurrentScope();
         Identifier id;
@@ -44,6 +44,7 @@ public class Manager {
         scope.put(name, id);
     }
 
+    // получуить число по имени
     public Long getLong(String name) {
         var id = resolve(name);
         if (id.getObject().getType().equals(ObjectType.ARRAY)) {
@@ -52,6 +53,7 @@ public class Manager {
         }
         return (Long) id.getObject().getValue();
     }
+
 
     public void writeToArray(String name, Integer index, Long value) {
         var arr = getArray(name);
