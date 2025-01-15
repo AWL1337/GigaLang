@@ -16,12 +16,28 @@ public class Manager {
 
     private final Stack<Map<String, Identifier>> stack = new Stack<>();
 
+    private final Stack<Map<String, Integer>> labeslStack = new Stack<>();
+
     private final List<MemoryObject> heap = new LinkedList<>();
 
     private final GarbageCollector garbageCollector = new GarbageCollector(this);
 
     private final Long MAX_TRIGGER_OBJECTS = 1000L;
 
+    public void init() {
+        labeslStack.push(new HashMap<>());
+    }
+
+    public void makeLabel(String label, Integer index) {
+        labeslStack.peek().put(label, index);
+    }
+
+    public Integer resolveLabel(String label) {
+        if (!labeslStack.peek().containsKey(label)) {
+            throw new IllegalArgumentException("Label " + label + " not found");
+        }
+        return labeslStack.peek().get(label);
+    }
 
     // создать или изменить переменную по имени
     public void allocate(String name, MemoryObject object) {
@@ -67,10 +83,12 @@ public class Manager {
 
     public void createScope() {
         stack.push(new HashMap<>());
+        labeslStack.push(new HashMap<>());
     }
 
     public void deleteScope() {
         stack.pop();
+        labeslStack.pop();
     }
 
     private Identifier resolve(String name) {

@@ -13,6 +13,7 @@ import java.util.List;
 public class ByteCodeGenerator extends GigaLangBaseListener {
     private final List<Instruction> instructions = new ArrayList<>();
 
+    //statements
     @Override
     public void enterPresetArrayDeclaration(GigaLangParser.PresetArrayDeclarationContext ctx) {
         String variableName = ctx.ID().getText();
@@ -92,6 +93,20 @@ public class ByteCodeGenerator extends GigaLangBaseListener {
     }
 
     @Override
+    public void enterReadArray(GigaLangParser.ReadArrayContext ctx) {
+        String variableName = ctx.ID().getText();
+        Long index = Long.parseLong(ctx.INT().getText());
+
+        Instruction read = Instruction.builder()
+                .type(InstructionType.ARRAY_LOAD)
+                .name(variableName)
+                .value(index)
+                .build();
+        instructions.add(read);
+    }
+
+    //math
+    @Override
     public void exitPowExpression(GigaLangParser.PowExpressionContext ctx) {
 
         Instruction pow = Instruction.builder()
@@ -130,6 +145,88 @@ public class ByteCodeGenerator extends GigaLangBaseListener {
                     .build();
             instructions.add(sub);
         }
+    }
+
+    @Override
+    public void exitModExpression(GigaLangParser.ModExpressionContext ctx) {
+        Instruction mod = Instruction.builder()
+                .type(InstructionType.MOD)
+                .build();
+        instructions.add(mod);
+    }
+
+    //relational
+    @Override
+    public void exitGtExpression(GigaLangParser.GtExpressionContext ctx) {
+        Instruction gt = Instruction.builder()
+                .type(InstructionType.GT)
+                .build();
+        instructions.add(gt);
+    }
+
+    @Override
+    public void exitGqExpression(GigaLangParser.GqExpressionContext ctx) {
+        Instruction ge = Instruction.builder()
+                .type(InstructionType.GE)
+                .build();
+        instructions.add(ge);
+    }
+
+    @Override
+    public void exitLtExpression(GigaLangParser.LtExpressionContext ctx) {
+        Instruction lt = Instruction.builder()
+                .type(InstructionType.LT)
+                .build();
+        instructions.add(lt);
+    }
+
+    @Override
+    public void exitLqExpression(GigaLangParser.LqExpressionContext ctx) {
+        Instruction le = Instruction.builder()
+                .type(InstructionType.LE)
+                .build();
+        instructions.add(le);
+    }
+
+    @Override
+    public void exitEqExpression(GigaLangParser.EqExpressionContext ctx) {
+        Instruction eq = Instruction.builder()
+                .type(InstructionType.EQ)
+                .build();
+        instructions.add(eq);
+    }
+
+    @Override
+    public void exitNqExpression(GigaLangParser.NqExpressionContext ctx) {
+        Instruction ne = Instruction.builder()
+                .type(InstructionType.NE)
+                .build();
+        instructions.add(ne);
+    }
+
+    //boolean
+    @Override
+    public void exitAndExpression(GigaLangParser.AndExpressionContext ctx) {
+        Instruction and = Instruction.builder()
+                .type(InstructionType.AND)
+                .build();
+        instructions.add(and);
+    }
+
+    @Override
+    public void exitOrExpression(GigaLangParser.OrExpressionContext ctx) {
+        Instruction or = Instruction.builder()
+                .type(InstructionType.OR)
+                .build();
+        instructions.add(or);
+    }
+
+    @Override
+    public void exitNotExpression(GigaLangParser.NotExpressionContext ctx) {
+        Instruction not = Instruction.builder()
+                .type(InstructionType.NOT)
+                .build();
+        instructions.add(not);
     }
 }
 

@@ -13,8 +13,7 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        String input = "var b = 4 + c " +
-                "arr b33 = [5, 4, 2, 1]";
+        String input = "bb == 0 || (a > 0 && q < 1)";
         GigaLangLexer lexer = new GigaLangLexer(CharStreams.fromString(input));
         GigaLangParser parser = new GigaLangParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.program();
