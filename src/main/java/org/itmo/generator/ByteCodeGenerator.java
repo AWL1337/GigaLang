@@ -178,5 +178,104 @@ public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
         return null;
     }
 
+    //relational
+    @Override
+    public Void visitGtExpression(GigaLangParser.GtExpressionContext ctx) {
+        visit(ctx.expression(0));
+        visit(ctx.expression(1));
+        Instruction gt = Instruction.builder()
+                .type(InstructionType.GT)
+                .build();
+        instructions.add(gt);
+        return null;
+    }
 
+    @Override
+    public Void visitGqExpression(GigaLangParser.GqExpressionContext ctx) {
+        visit(ctx.expression(0));
+        visit(ctx.expression(1));
+        Instruction ge = Instruction.builder()
+                .type(InstructionType.GE)
+                .build();
+        instructions.add(ge);
+        return null;
+    }
+
+    @Override
+    public Void visitLtExpression(GigaLangParser.LtExpressionContext ctx) {
+        visit(ctx.expression(0));
+        visit(ctx.expression(1));
+        Instruction lt = Instruction.builder()
+                .type(InstructionType.LT)
+                .build();
+        instructions.add(lt);
+        return null;
+    }
+
+    @Override
+    public Void visitLqExpression(GigaLangParser.LqExpressionContext ctx) {
+        visit(ctx.expression(0));
+        visit(ctx.expression(1));
+        Instruction le = Instruction.builder()
+                .type(InstructionType.LE)
+                .build();
+        instructions.add(le);
+        return null;
+    }
+
+    @Override
+    public Void visitEqExpression(GigaLangParser.EqExpressionContext ctx) {
+        visit(ctx.expression(0));
+        visit(ctx.expression(1));
+        Instruction eq = Instruction.builder()
+                .type(InstructionType.EQ)
+                .build();
+        instructions.add(eq);
+        return null;
+    }
+
+    @Override
+    public Void visitNqExpression(GigaLangParser.NqExpressionContext ctx) {
+        visit(ctx.expression(0));
+        visit(ctx.expression(1));
+        Instruction ne = Instruction.builder()
+                .type(InstructionType.NE)
+                .build();
+        instructions.add(ne);
+        return null;
+    }
+
+    //boolean
+    @Override
+    public Void visitAndExpression(GigaLangParser.AndExpressionContext ctx) {
+        visit(ctx.booleanExpression(0));
+        visit(ctx.booleanExpression(1));
+
+        Instruction and = Instruction.builder()
+                .type(InstructionType.AND)
+                .build();
+        instructions.add(and);
+        return null;
+    }
+
+    @Override
+    public Void visitOrExpression(GigaLangParser.OrExpressionContext ctx) {
+        visit(ctx.booleanExpression(0));
+        visit(ctx.booleanExpression(1));
+        Instruction or = Instruction.builder()
+                .type(InstructionType.OR)
+                .build();
+        instructions.add(or);
+        return null;
+    }
+
+    @Override
+    public Void visitNotExpression(GigaLangParser.NotExpressionContext ctx) {
+        visit(ctx.booleanExpression());
+        Instruction not = Instruction.builder()
+                .type(InstructionType.NOT)
+                .build();
+        instructions.add(not);
+        return null;
+    }
 }

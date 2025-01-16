@@ -220,4 +220,42 @@ public class ByteCodeGeneratorTest {
 
         assertEquals(expected, generator.getInstructions());
     }
+
+    @Test
+    public void relationalExpressionTest() {
+        String input = "a > 1\n";
+        GigaLangLexer lexer = new GigaLangLexer(CharStreams.fromString(input));
+        GigaLangParser parser = new GigaLangParser(new CommonTokenStream(lexer));
+        ParseTree tree = parser.program();
+
+        ByteCodeGenerator generator = new ByteCodeGenerator();
+        generator.visit(tree);
+
+        List<Instruction> expected = List.of(
+                new Instruction(InstructionType.LOAD_VAR, "a", null),
+                new Instruction(InstructionType.PUSH, null, 1L),
+                new Instruction(InstructionType.GT, null, null)
+        );
+
+        assertEquals(expected, generator.getInstructions());
+    }
+
+    @Test
+    public void booleanExpressionTest() {
+        String input = "a > 1 || \n";
+        GigaLangLexer lexer = new GigaLangLexer(CharStreams.fromString(input));
+        GigaLangParser parser = new GigaLangParser(new CommonTokenStream(lexer));
+        ParseTree tree = parser.program();
+
+        ByteCodeGenerator generator = new ByteCodeGenerator();
+        generator.visit(tree);
+
+        List<Instruction> expected = List.of(
+                new Instruction(InstructionType.LOAD_VAR, "a", null),
+                new Instruction(InstructionType.PUSH, null, 1L),
+                new Instruction(InstructionType.GT, null, null)
+        );
+
+        assertEquals(expected, generator.getInstructions());
+    }
 }

@@ -53,6 +53,8 @@ statement:
     | presetArrayDeclaration
     | ifStatement
     | ifElseStatement
+    | booleanExpression
+    | relationalExpression
     ;
 
 variableDeclaration: VAR ID ASSIGN expression LINE;
