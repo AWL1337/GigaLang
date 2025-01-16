@@ -1,6 +1,7 @@
-package org.itmo;
+package org.itmo.generator;
 
 import lombok.Getter;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.itmo.VM.instructions.Instruction;
 import org.itmo.VM.instructions.InstructionType;
 import org.itmo.antlr.GigaLangBaseListener;
@@ -12,6 +13,29 @@ import java.util.List;
 @Getter
 public class ByteCodeGenerator extends GigaLangBaseListener {
     private final List<Instruction> instructions = new ArrayList<>();
+
+    @Override
+    public void exitVariableAssignation(GigaLangParser.VariableAssignationContext ctx) {
+        String variableName = ctx.ID().getText();
+        Instruction store = Instruction.builder()
+                .type(InstructionType.STORE)
+                .name(variableName)
+                .build();
+        instructions.add(store);
+    }
+
+    @Override
+    public void exitArrayAssignation(GigaLangParser.ArrayAssignationContext ctx) {
+        String variableName = ctx.ID().getText();
+        Long index = Long.parseLong(ctx.getText());
+
+        Instruction store = Instruction.builder()
+                .type(InstructionType.ARRAY_STORE)
+                .name(variableName)
+                .value(index)
+                .build();
+        instructions.add(store);
+    }
 
     //statements
     @Override
@@ -95,7 +119,7 @@ public class ByteCodeGenerator extends GigaLangBaseListener {
     @Override
     public void enterReadArray(GigaLangParser.ReadArrayContext ctx) {
         String variableName = ctx.ID().getText();
-        Long index = Long.parseLong(ctx.INT().getText());
+        Long index = Long.parseLong(ctx.getText());
 
         Instruction read = Instruction.builder()
                 .type(InstructionType.ARRAY_LOAD)
@@ -228,6 +252,14 @@ public class ByteCodeGenerator extends GigaLangBaseListener {
                 .build();
         instructions.add(not);
     }
+
+    //if
+    @Override
+    public void enterIfStatement(GigaLangParser.IfStatementContext ctx) {
+        // visitor
+
+    }
+
 }
 
 

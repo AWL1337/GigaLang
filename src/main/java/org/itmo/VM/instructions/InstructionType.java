@@ -5,6 +5,6 @@ public enum InstructionType {
     NOT, AND, OR,
     GT, LT, GE, LE, EQ, NE,
     STORE, READ, ARRAY_STORE, ARRAY_LOAD,ARRAY_CREATE, LOAD_VAR, PUSH,
-    LABEL, MAKE_LABEL,
+    LABEL,
     JUMP, JUMP_IF_FALSE,
 }
