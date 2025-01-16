@@ -61,7 +61,7 @@ variableAssignation: ID ASSIGN expression LINE;
 
 arrayDeclaration: ARR ID ASSIGN NEW SLPAREN expression SRPAREN LINE;
 
-presetArrayDeclaration: ARR ID ASSIGN SLPAREN list SRPAREN LINE;
+presetArrayDeclaration: ARR ID ASSIGN SLPAREN expressionList SRPAREN LINE;
 
 arrayAssignation: ID SLPAREN expression SRPAREN ASSIGN expression LINE;
 
@@ -86,7 +86,7 @@ ifStatement: IF LPAREN booleanExpression RPAREN LBRACE statement+ RBRACE;
 
 ifElseStatement: IF LPAREN booleanExpression RPAREN LBRACE statement+ RBRACE ELSE LBRACE statement+ RBRACE;
 
-list: INT (COM INT)* #ListInt;
+expressionList: expression (COM expression)*;
 
 expression:
     expression MOD expression             # ModExpression

@@ -3,7 +3,6 @@ package org.itmo;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.itmo.VM.instructions.Instruction;
 import org.itmo.antlr.GigaLangLexer;
 import org.itmo.antlr.GigaLangParser;
@@ -19,10 +18,10 @@ public class Main {
         GigaLangParser parser = new GigaLangParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.program();
 
-        ByteCodeGenerator listener = new ByteCodeGenerator();
-        ParseTreeWalker.DEFAULT.walk(listener, tree);
+        ByteCodeGenerator generator = new ByteCodeGenerator();
+        generator.visit(tree);
 
-        List<Instruction> instructions = listener.getInstructions();
+        List<Instruction> instructions = generator.getInstructions();
         for (Instruction instruction : instructions) {
             System.out.println(instruction);
         }

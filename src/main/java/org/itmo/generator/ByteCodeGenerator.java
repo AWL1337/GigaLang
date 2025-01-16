@@ -1,265 +1,182 @@
 package org.itmo.generator;
 
 import lombok.Getter;
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.itmo.VM.instructions.Instruction;
 import org.itmo.VM.instructions.InstructionType;
-import org.itmo.antlr.GigaLangBaseListener;
+import org.itmo.antlr.GigaLangBaseVisitor;
 import org.itmo.antlr.GigaLangParser;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-public class ByteCodeGenerator extends GigaLangBaseListener {
+public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
     private final List<Instruction> instructions = new ArrayList<>();
 
     @Override
-    public void exitVariableAssignation(GigaLangParser.VariableAssignationContext ctx) {
+    public Void visitVariableAssignation(GigaLangParser.VariableAssignationContext ctx) {
+        visit(ctx.expression());
         String variableName = ctx.ID().getText();
-        Instruction store = Instruction.builder()
+        instructions.add(Instruction.builder()
                 .type(InstructionType.STORE)
                 .name(variableName)
-                .build();
-        instructions.add(store);
+                .build());
+        return null;
     }
 
     @Override
-    public void exitArrayAssignation(GigaLangParser.ArrayAssignationContext ctx) {
+    public Void visitArrayAssignation(GigaLangParser.ArrayAssignationContext ctx) {
+        ctx.expression().forEach(this::visit);
         String variableName = ctx.ID().getText();
-        Long index = Long.parseLong(ctx.getText());
-
-        Instruction store = Instruction.builder()
+        instructions.add(Instruction.builder()
                 .type(InstructionType.ARRAY_STORE)
                 .name(variableName)
-                .value(index)
-                .build();
-        instructions.add(store);
+                .build());
+        return null;
     }
 
-    //statements
     @Override
-    public void enterPresetArrayDeclaration(GigaLangParser.PresetArrayDeclarationContext ctx) {
+    public Void visitPresetArrayDeclaration(GigaLangParser.PresetArrayDeclarationContext ctx) {
         String variableName = ctx.ID().getText();
-        List<String> split = List.of(ctx.list().getText().split(","));
+        int size = ctx.expressionList().expression().size();
 
-        Instruction putSize = Instruction.builder()
+        instructions.add(Instruction.builder()
                 .type(InstructionType.PUSH)
-                .value((long) split.size())
-                .build();
+                .value((long) size)
+                .build());
 
-        instructions.add(putSize);
-
-        Instruction createArray = Instruction.builder()
+        instructions.add(Instruction.builder()
                 .type(InstructionType.ARRAY_CREATE)
                 .name(variableName)
-                .build();
+                .build());
 
-        instructions.add(createArray);
+        var list = ctx.expressionList().expression();
 
-        for (int i = 0; i < split.size(); i++) {
-            Instruction pushVal = Instruction.builder()
+        for (int i = 0; i < list.size(); i++) {
+            instructions.add(Instruction.builder()
                     .type(InstructionType.PUSH)
-                    .value(Long.parseLong(split.get(i)))
-                    .build();
-
-            instructions.add(pushVal);
-
-            Instruction arrayStore = Instruction.builder()
-                    .type(InstructionType.ARRAY_STORE)
                     .value((long)i)
-                    .build();
+                    .build());
 
-            instructions.add(arrayStore);
+            visit(list.get(i));
+
+            instructions.add(Instruction.builder()
+                    .type(InstructionType.ARRAY_STORE)
+                    .name(variableName)
+                    .build());
         }
+        return null;
     }
 
     @Override
-    public void exitVariableDeclaration(GigaLangParser.VariableDeclarationContext ctx) {
-
-        // Генерируем инструкцию STORE для сохранения результата в переменную
+    public Void visitVariableDeclaration(GigaLangParser.VariableDeclarationContext ctx) {
+        visit(ctx.expression());
         String variableName = ctx.ID().getText();
-        Instruction storeVariable = Instruction.builder()
+        instructions.add(Instruction.builder()
                 .type(InstructionType.STORE)
                 .name(variableName)
-                .build();
-        instructions.add(storeVariable);
+                .build());
+        return null;
     }
 
     @Override
-    public void exitArrayDeclaration(GigaLangParser.ArrayDeclarationContext ctx) {
+    public Void visitArrayDeclaration(GigaLangParser.ArrayDeclarationContext ctx) {
+        visit(ctx.expression());
         String variableName = ctx.ID().getText();
-        Instruction storeVariable = Instruction.builder()
+        instructions.add(Instruction.builder()
                 .type(InstructionType.ARRAY_CREATE)
                 .name(variableName)
-                .build();
-        instructions.add(storeVariable);
+                .build());
+        return null;
     }
 
     @Override
-    public void enterIntLiteral(GigaLangParser.IntLiteralContext ctx) {
+    public Void visitIntLiteral(GigaLangParser.IntLiteralContext ctx) {
         long value = Long.parseLong(ctx.INT().getText());
-        Instruction push = Instruction.builder()
+        instructions.add(Instruction.builder()
                 .type(InstructionType.PUSH)
                 .value(value)
-                .build();
-        instructions.add(push);
+                .build());
+        return null;
     }
 
     @Override
-    public void enterVariable(GigaLangParser.VariableContext ctx) {
+    public Void visitVariable(GigaLangParser.VariableContext ctx) {
         String variableName = ctx.ID().getText();
-        Instruction load = Instruction.builder()
+        instructions.add(Instruction.builder()
                 .type(InstructionType.LOAD_VAR)
                 .name(variableName)
-                .build();
-        instructions.add(load);
+                .build());
+        return null;
     }
 
     @Override
-    public void enterReadArray(GigaLangParser.ReadArrayContext ctx) {
+    public Void visitReadArray(GigaLangParser.ReadArrayContext ctx) {
+        visit(ctx.expression());
         String variableName = ctx.ID().getText();
-        Long index = Long.parseLong(ctx.getText());
 
-        Instruction read = Instruction.builder()
+        instructions.add(Instruction.builder()
                 .type(InstructionType.ARRAY_LOAD)
                 .name(variableName)
-                .value(index)
-                .build();
-        instructions.add(read);
+                .build());
+        return null;
     }
 
-    //math
     @Override
-    public void exitPowExpression(GigaLangParser.PowExpressionContext ctx) {
+    public Void visitPowExpression(GigaLangParser.PowExpressionContext ctx) {
+        visit(ctx.expression(0));
+        visit(ctx.expression(1));
 
-        Instruction pow = Instruction.builder()
+        instructions.add(Instruction.builder()
                 .type(InstructionType.POW)
-                .build();
-        instructions.add(pow);
+                .build());
+        return null;
     }
 
     @Override
-    public void exitMulDivExpression(GigaLangParser.MulDivExpressionContext ctx) {
+    public Void visitMulDivExpression(GigaLangParser.MulDivExpressionContext ctx) {
+        visit(ctx.expression(0));
+        visit(ctx.expression(1));
 
         if (ctx.MULT() != null) {
-            Instruction mul = Instruction.builder()
+            instructions.add(Instruction.builder()
                     .type(InstructionType.MUL)
-                    .build();
-            instructions.add(mul);
+                    .build());
         } else if (ctx.DIV() != null) {
-            Instruction div = Instruction.builder()
+            instructions.add(Instruction.builder()
                     .type(InstructionType.DIV)
-                    .build();
-            instructions.add(div);
+                    .build());
         }
+        return null;
     }
 
     @Override
-    public void exitAddSubExpression(GigaLangParser.AddSubExpressionContext ctx) {
+    public Void visitAddSubExpression(GigaLangParser.AddSubExpressionContext ctx) {
+        visit(ctx.expression(0));
+        visit(ctx.expression(1));
 
         if (ctx.PLUS() != null) {
-            Instruction add = Instruction.builder()
+            instructions.add(Instruction.builder()
                     .type(InstructionType.ADD)
-                    .build();
-            instructions.add(add);
+                    .build());
         } else if (ctx.MINUS() != null) {
-            Instruction sub = Instruction.builder()
+            instructions.add(Instruction.builder()
                     .type(InstructionType.SUB)
-                    .build();
-            instructions.add(sub);
+                    .build());
         }
+        return null;
     }
 
     @Override
-    public void exitModExpression(GigaLangParser.ModExpressionContext ctx) {
-        Instruction mod = Instruction.builder()
+    public Void visitModExpression(GigaLangParser.ModExpressionContext ctx) {
+        visit(ctx.expression(0));
+        visit(ctx.expression(1));
+
+        instructions.add(Instruction.builder()
                 .type(InstructionType.MOD)
-                .build();
-        instructions.add(mod);
+                .build());
+        return null;
     }
 
-    //relational
-    @Override
-    public void exitGtExpression(GigaLangParser.GtExpressionContext ctx) {
-        Instruction gt = Instruction.builder()
-                .type(InstructionType.GT)
-                .build();
-        instructions.add(gt);
-    }
-
-    @Override
-    public void exitGqExpression(GigaLangParser.GqExpressionContext ctx) {
-        Instruction ge = Instruction.builder()
-                .type(InstructionType.GE)
-                .build();
-        instructions.add(ge);
-    }
-
-    @Override
-    public void exitLtExpression(GigaLangParser.LtExpressionContext ctx) {
-        Instruction lt = Instruction.builder()
-                .type(InstructionType.LT)
-                .build();
-        instructions.add(lt);
-    }
-
-    @Override
-    public void exitLqExpression(GigaLangParser.LqExpressionContext ctx) {
-        Instruction le = Instruction.builder()
-                .type(InstructionType.LE)
-                .build();
-        instructions.add(le);
-    }
-
-    @Override
-    public void exitEqExpression(GigaLangParser.EqExpressionContext ctx) {
-        Instruction eq = Instruction.builder()
-                .type(InstructionType.EQ)
-                .build();
-        instructions.add(eq);
-    }
-
-    @Override
-    public void exitNqExpression(GigaLangParser.NqExpressionContext ctx) {
-        Instruction ne = Instruction.builder()
-                .type(InstructionType.NE)
-                .build();
-        instructions.add(ne);
-    }
-
-    //boolean
-    @Override
-    public void exitAndExpression(GigaLangParser.AndExpressionContext ctx) {
-        Instruction and = Instruction.builder()
-                .type(InstructionType.AND)
-                .build();
-        instructions.add(and);
-    }
-
-    @Override
-    public void exitOrExpression(GigaLangParser.OrExpressionContext ctx) {
-        Instruction or = Instruction.builder()
-                .type(InstructionType.OR)
-                .build();
-        instructions.add(or);
-    }
-
-    @Override
-    public void exitNotExpression(GigaLangParser.NotExpressionContext ctx) {
-        Instruction not = Instruction.builder()
-                .type(InstructionType.NOT)
-                .build();
-        instructions.add(not);
-    }
-
-    //if
-    @Override
-    public void enterIfStatement(GigaLangParser.IfStatementContext ctx) {
-        // visitor
-
-    }
 
 }
-
-
