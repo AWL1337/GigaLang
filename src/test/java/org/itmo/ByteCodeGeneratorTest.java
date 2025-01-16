@@ -312,4 +312,33 @@ public class ByteCodeGeneratorTest {
 
         assertEquals(expected, generator.getInstructions());
     }
+
+    @Test
+    public void whileExpressionTest() {
+        String input = "var a = 3; while (a < 6) {a = a + 1;}";
+        GigaLangLexer lexer = new GigaLangLexer(CharStreams.fromString(input));
+        GigaLangParser parser = new GigaLangParser(new CommonTokenStream(lexer));
+        ParseTree tree = parser.program();
+
+        ByteCodeGenerator generator = new ByteCodeGenerator();
+        generator.visit(tree);
+
+        List<Instruction> expected = List.of(
+                new Instruction(InstructionType.PUSH, null, 3L),
+                new Instruction(InstructionType.STORE, "a", null),
+                new Instruction(InstructionType.LABEL, "0", null),
+                new Instruction(InstructionType.LOAD_VAR, "a", null),
+                new Instruction(InstructionType.PUSH, null, 6L),
+                new Instruction(InstructionType.LT, null, null),
+                new Instruction(InstructionType.JUMP_IF_FALSE, "1", null),
+                new Instruction(InstructionType.LOAD_VAR, "a", null),
+                new Instruction(InstructionType.PUSH, null, 1L),
+                new Instruction(InstructionType.ADD, null, null),
+                new Instruction(InstructionType.STORE, "a", null),
+                new Instruction(InstructionType.JUMP, "0", null),
+                new Instruction(InstructionType.LABEL, "1", null)
+        );
+
+        assertEquals(expected, generator.getInstructions());
+    }
 }

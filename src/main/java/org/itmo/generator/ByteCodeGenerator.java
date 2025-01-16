@@ -348,4 +348,44 @@ public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
         instructions.add(label);
         return null;
     }
+
+    @Override
+    public Void visitWhileStatement(GigaLangParser.WhileStatementContext ctx) {
+        String startLoopLabel = getNewLabel();
+        String endLoopLabel = getNewLabel();
+
+        Instruction startLabel = Instruction.builder()
+                .type(InstructionType.LABEL)
+                .name(startLoopLabel)
+                .build();
+
+        instructions.add(startLabel);
+
+        visit(ctx.booleanExpression());
+
+        Instruction jumpFalse = Instruction.builder()
+                .type(InstructionType.JUMP_IF_FALSE)
+                .name(endLoopLabel)
+                .build();
+
+        instructions.add(jumpFalse);
+
+        ctx.statement().forEach(this::visit);
+
+        Instruction jump = Instruction.builder()
+                .type(InstructionType.JUMP)
+                .name(startLoopLabel)
+                .build();
+
+        instructions.add(jump);
+
+        Instruction endLabel = Instruction.builder()
+                .type(InstructionType.LABEL)
+                .name(endLoopLabel)
+                .build();
+
+        instructions.add(endLabel);
+
+        return null;
+    }
 }

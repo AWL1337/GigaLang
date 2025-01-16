@@ -6,6 +6,7 @@ ARR: 'arr';
 NEW: 'new';
 IF: 'if';
 ELSE: 'else';
+WHILE: 'while';
 
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
 INT: [0-9]+;
@@ -52,6 +53,7 @@ statement:
     | presetArrayDeclaration
     | ifStatement
     | ifElseStatement
+    | whileStatement
     | booleanExpression
     | relationalExpression
     ;
@@ -88,7 +90,10 @@ ifStatement: IF LPAREN booleanExpression RPAREN LBRACE statement+ RBRACE;
 ifElseStatement: IF LPAREN booleanExpression RPAREN LBRACE thenStatement RBRACE ELSE LBRACE elseStatement RBRACE;
 thenStatement: statement+;
 elseStatement: statement+;
+
 expressionList: expression (COM expression)*;
+
+whileStatement: WHILE LPAREN booleanExpression RPAREN LBRACE statement+ RBRACE;
 
 expression:
     expression MOD expression             # ModExpression
