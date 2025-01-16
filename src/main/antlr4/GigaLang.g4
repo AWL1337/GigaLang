@@ -39,8 +39,7 @@ RBRACE: '}';
 SEMI: ';';
 COM: ',';
 
-LINE: [\n]+;
-WS: [ \t]+ -> skip;
+WS: [ \t\n]+ -> skip;
 
 // Парсер
 program: statement+;
@@ -57,15 +56,15 @@ statement:
     | relationalExpression
     ;
 
-variableDeclaration: VAR ID ASSIGN expression LINE;
+variableDeclaration: VAR ID ASSIGN expression SEMI;
 
-variableAssignation: ID ASSIGN expression LINE;
+variableAssignation: ID ASSIGN expression SEMI;
 
-arrayDeclaration: ARR ID ASSIGN NEW SLPAREN expression SRPAREN LINE;
+arrayDeclaration: ARR ID ASSIGN NEW SLPAREN expression SRPAREN SEMI;
 
-presetArrayDeclaration: ARR ID ASSIGN SLPAREN expressionList SRPAREN LINE;
+presetArrayDeclaration: ARR ID ASSIGN SLPAREN expressionList SRPAREN SEMI;
 
-arrayAssignation: ID SLPAREN expression SRPAREN ASSIGN expression LINE;
+arrayAssignation: ID SLPAREN expression SRPAREN ASSIGN expression SEMI;
 
 booleanExpression:
     booleanExpression OR booleanExpression  # OrExpression
@@ -86,8 +85,9 @@ relationalExpression:
 
 ifStatement: IF LPAREN booleanExpression RPAREN LBRACE statement+ RBRACE;
 
-ifElseStatement: IF LPAREN booleanExpression RPAREN LBRACE statement+ RBRACE ELSE LBRACE statement+ RBRACE;
-
+ifElseStatement: IF LPAREN booleanExpression RPAREN LBRACE thenStatement RBRACE ELSE LBRACE elseStatement RBRACE;
+thenStatement: statement+;
+elseStatement: statement+;
 expressionList: expression (COM expression)*;
 
 expression:

@@ -12,6 +12,13 @@ import java.util.List;
 @Getter
 public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
     private final List<Instruction> instructions = new ArrayList<>();
+    private Long uniqLabelId = 0L;
+
+    private String getNewLabel() {
+        Long currentLabelId = uniqLabelId;
+        uniqLabelId++;
+        return currentLabelId.toString();
+    }
 
     @Override
     public Void visitVariableAssignation(GigaLangParser.VariableAssignationContext ctx) {
@@ -276,6 +283,69 @@ public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
                 .type(InstructionType.NOT)
                 .build();
         instructions.add(not);
+        return null;
+    }
+    //if
+    @Override
+    public Void visitIfStatement(GigaLangParser.IfStatementContext ctx) {
+        visit(ctx.booleanExpression());
+
+        String endLabel = getNewLabel();
+
+        Instruction jump = Instruction.builder()
+                .type(InstructionType.JUMP_IF_FALSE)
+                .name(endLabel)
+                .build();
+
+        instructions.add(jump);
+
+        ctx.statement().forEach(this::visit);
+
+        Instruction label = Instruction.builder()
+                .type(InstructionType.LABEL)
+                .name(endLabel)
+                .build();
+        instructions.add(label);
+        return null;
+    }
+
+    @Override
+    public Void visitIfElseStatement(GigaLangParser.IfElseStatementContext ctx) {
+        visit(ctx.booleanExpression());
+
+        String elseLabel = getNewLabel();
+        String endLabel = getNewLabel();
+
+        Instruction jumpElse = Instruction.builder()
+                .type(InstructionType.JUMP_IF_FALSE)
+                .name(elseLabel)
+                .build();
+
+        instructions.add(jumpElse);
+
+        ctx.thenStatement().statement().forEach(this::visit);
+
+        Instruction jump = Instruction.builder()
+                .type(InstructionType.JUMP)
+                .name(endLabel)
+                .build();
+
+        instructions.add(jump);
+
+        Instruction labelElse = Instruction.builder()
+                .type(InstructionType.LABEL)
+                .name(elseLabel)
+                .build();
+
+        instructions.add(labelElse);
+
+        ctx.elseStatement().statement().forEach(this::visit);
+
+        Instruction label = Instruction.builder()
+                .type(InstructionType.LABEL)
+                .name(endLabel)
+                .build();
+        instructions.add(label);
         return null;
     }
 }
