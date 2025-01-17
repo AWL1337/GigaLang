@@ -1,6 +1,7 @@
 package org.itmo.generator;
 
 import lombok.Getter;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.itmo.VM.instructions.Instruction;
 import org.itmo.VM.instructions.InstructionType;
 import org.itmo.antlr.GigaLangBaseVisitor;
@@ -72,17 +73,6 @@ public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
                     .name(variableName)
                     .build());
         }
-        return null;
-    }
-
-    @Override
-    public Void visitVariableDeclaration(GigaLangParser.VariableDeclarationContext ctx) {
-        visit(ctx.expression());
-        String variableName = ctx.ID().getText();
-        instructions.add(Instruction.builder()
-                .type(InstructionType.STORE)
-                .name(variableName)
-                .build());
         return null;
     }
 
@@ -385,6 +375,42 @@ public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
                 .build();
 
         instructions.add(endLabel);
+
+        return null;
+    }
+
+    //fun
+    @Override
+    public Void visitReturnStatement(GigaLangParser.ReturnStatementContext ctx) {
+        visit(ctx.expression());
+        Instruction ret = Instruction.builder()
+                .type(InstructionType.RETURN)
+                .build();
+        instructions.add(ret);
+        return null;
+    }
+
+    @Override
+    public Void visitFunctionDefinition(GigaLangParser.FunctionDefinitionContext ctx) {
+
+        var args = ctx.idList().ID().stream().map(ParseTree::getText).toList();
+        var funName = ctx.ID().getText();
+
+        Instruction func = Instruction.builder()
+                .type(InstructionType.FUN)
+                .name(funName)
+                .arguments(args)
+                .build();
+
+        instructions.add(func);
+
+        ctx.statement().forEach(this::visit);
+
+        Instruction funcEnd = Instruction.builder()
+                .type(InstructionType.END_FUN)
+                .build();
+
+        instructions.add(funcEnd);
 
         return null;
     }

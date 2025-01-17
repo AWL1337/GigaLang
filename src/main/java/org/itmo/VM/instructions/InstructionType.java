@@ -7,4 +7,5 @@ public enum InstructionType {
     STORE, READ, ARRAY_STORE, ARRAY_LOAD,ARRAY_CREATE, LOAD_VAR, PUSH,
     LABEL,
     JUMP, JUMP_IF_FALSE,
+    FUN, END_FUN, RETURN,
 }

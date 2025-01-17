@@ -7,6 +7,8 @@ NEW: 'new';
 IF: 'if';
 ELSE: 'else';
 WHILE: 'while';
+DEF: 'def';
+RETURN: 'return';
 
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
 INT: [0-9]+;
@@ -48,7 +50,6 @@ program: statement+;
 statement:
     variableAssignation
     | arrayAssignation
-    | variableDeclaration
     | arrayDeclaration
     | presetArrayDeclaration
     | ifStatement
@@ -56,15 +57,15 @@ statement:
     | whileStatement
     | booleanExpression
     | relationalExpression
+    | functionDefinition
+    | returnStatement
     ;
-
-variableDeclaration: VAR ID ASSIGN expression SEMI;
 
 variableAssignation: ID ASSIGN expression SEMI;
 
-arrayDeclaration: ARR ID ASSIGN NEW SLPAREN expression SRPAREN SEMI;
+arrayDeclaration: ID ASSIGN NEW SLPAREN expression SRPAREN SEMI;
 
-presetArrayDeclaration: ARR ID ASSIGN SLPAREN expressionList SRPAREN SEMI;
+presetArrayDeclaration: ID ASSIGN SLPAREN expressionList SRPAREN SEMI;
 
 arrayAssignation: ID SLPAREN expression SRPAREN ASSIGN expression SEMI;
 
@@ -91,9 +92,14 @@ ifElseStatement: IF LPAREN booleanExpression RPAREN LBRACE thenStatement RBRACE 
 thenStatement: statement+;
 elseStatement: statement+;
 
+returnStatement: RETURN expression SEMI;
+
 expressionList: expression (COM expression)*;
+idList: (ID (COM ID)*) | ID?;
 
 whileStatement: WHILE LPAREN booleanExpression RPAREN LBRACE statement+ RBRACE;
+
+functionDefinition: DEF ID LPAREN idList RPAREN LBRACE statement+ RBRACE;
 
 expression:
     expression MOD expression             # ModExpression
@@ -102,6 +108,6 @@ expression:
     | expression (PLUS | MINUS) expression # AddSubExpression
     | LPAREN expression RPAREN          # ParenExpression
     | INT                               # IntLiteral
-    | ID SLPAREN expression SRPAREN            # ReadArray
+    | ID SLPAREN expression SRPAREN     # ReadArray
     | ID                                # Variable
     ;
