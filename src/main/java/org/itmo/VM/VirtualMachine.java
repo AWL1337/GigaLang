@@ -1,6 +1,7 @@
 package org.itmo.VM;
 
 import org.itmo.VM.instructions.Instruction;
+import org.itmo.VM.instructions.InstructionType;
 import org.itmo.VM.memory.Manager;
 import org.itmo.VM.memory.object.MemoryObject;
 import org.itmo.VM.memory.object.ObjectType;
@@ -12,72 +13,129 @@ import java.util.Stack;
 public class VirtualMachine {
     private final Manager manager = new Manager();
 
-    public final Stack<Long> stack = new Stack<>();
+    private final Stack<Long> stack;
 
     private Integer pc = 0;
 
+    public VirtualMachine(Stack<Long> stack) {
+        this.stack = stack;
+    }
+
+    public VirtualMachine() {
+        this(new Stack<>());
+    }
+
+
     public void interpret(List<Instruction> instructions) {
+        searchLabels(instructions);
+        pc = 0;
         while (pc < instructions.size()) {
             Instruction instruction = instructions.get(pc);
             pc++;
+            execute(instruction);
+        }
+    }
+
+    private void searchLabels(List<Instruction> instructions) {
+        for (int i = 0; i < instructions.size(); i++) {
+            Instruction instruction = instructions.get(i);
+            if (instruction.getType().equals(InstructionType.LABEL)) {
+                manager.makeLabel(instruction.getName(), i);
+            }
         }
     }
 
     public void execute(Instruction instruction) {
         switch (instruction.getType()) {
             case STORE:
-                StoreOp(instruction.getName());
+                storeOp(instruction.getName());
                 break;
 
             case LOAD_VAR:
-                LoadVariable(instruction.getName());
+                loadVariable(instruction.getName());
                 break;
 
             case PUSH:
-                Push(instruction.getValue());
+                push(instruction.getValue());
                 break;
+
             case ADD:
-                AddOp();
+                addOp();
                 break;
 
             case SUB:
-                SubOp();
+                subOp();
                 break;
 
             case MUL:
-                MulOp();
+                mulOp();
                 break;
 
             case DIV:
-                DivOp();
+                divOp();
                 break;
 
             case MOD:
-                ModOp();
+                modOp();
                 break;
 
             case AND:
-                AndOp();
+                andOp();
                 break;
 
             case OR:
-                OrOp();
+                orOp();
                 break;
 
             case NOT:
-                NotOp();
+                notOp();
+                break;
+
+            case EQ:
+                eqOp();
+                break;
+
+            case NE:
+                neOp();
+                break;
+
+            case LT:
+                ltOp();
+                break;
+
+            case GT:
+                gtOp();
+                break;
+
+            case LE:
+                leOp();
+                break;
+
+            case GE:
+                geOp();
                 break;
 
             case ARRAY_CREATE:
-                ArrayCreate(instruction.getName());
+                arrayCreate(instruction.getName());
                 break;
 
             case ARRAY_LOAD:
-                ArrayLoadOp(instruction.getName(), instruction.getValue());
+                arrayLoadOp(instruction.getName());
                 break;
 
             case ARRAY_STORE:
-                ArrayStoreOp(instruction.getName(), instruction.getValue());
+                arrayStoreOp(instruction.getName());
+                break;
+
+            case LABEL:
+                break;
+
+            case JUMP:
+                jump(instruction.getName());
+                break;
+
+            case JUMP_IF_FALSE:
+                jumpIfFalse(instruction.getName());
                 break;
 
             default:
@@ -85,45 +143,45 @@ public class VirtualMachine {
         }
     }
 
-    private void Push(Long value) {
+    private void push(Long value) {
         stack.push(value);
     }
 
     // сохранить переменную в стеке
-    private void StoreOp(String name) {
+    private void storeOp(String name) {
         var value = new MemoryObject(ObjectType.LONG, stack.pop());
         manager.allocate(name, value);
     }
 
     // получить значение переменной по имени
-    private void LoadVariable(String name) {
+    private void loadVariable(String name) {
         Long value = manager.getLong(name);
         stack.push(value);
     }
 
     // сложение
-    private void AddOp() {
+    private void addOp() {
         Long right = stack.pop();
         Long left = stack.pop();
         stack.push(left + right);
     }
 
     // вычитание
-    private void SubOp() {
+    private void subOp() {
         Long right = stack.pop();
         Long left = stack.pop();
         stack.push(left - right);
     }
 
     // умножение
-    private void MulOp() {
+    private void mulOp() {
         Long right = stack.pop();
         Long left = stack.pop();
         stack.push(left * right);
     }
 
     // деление
-    private void DivOp() {
+    private void divOp() {
         Long right = stack.pop();
         Long left = stack.pop();
         if (right == 0) {
@@ -133,46 +191,97 @@ public class VirtualMachine {
     }
 
     // нахождение остатка
-    private void ModOp() {
+    private void modOp() {
         Long right = stack.pop();
         Long left = stack.pop();
         stack.push(left % right);
     }
 
     // логическая операция and
-    private void AndOp() {
+    private void andOp() {
         Long right = stack.pop();
         Long left = stack.pop();
         stack.push((left != 0 && right != 0) ? 1L : 0L);
     }
 
     // логическая операция or
-    private void OrOp() {
+    private void orOp() {
         Long right = stack.pop();
         Long left = stack.pop();
         stack.push((left != 0 || right != 0) ? 1L : 0L);
     }
 
     // логическая операция not
-    private void NotOp() {
+    private void notOp() {
         Long value = stack.pop();
         stack.push((value == 0) ? 1L : 0L);
     }
 
+    private void eqOp() {
+        Long right = stack.pop();
+        Long left = stack.pop();
+        stack.push(left.equals(right) ? 1L : 0L);
+    }
+
+    private void neOp() {
+        Long right = stack.pop();
+        Long left = stack.pop();
+        stack.push(left.equals(right) ? 0L : 1L);
+    }
+
+
+    private void ltOp() {
+        Long right = stack.pop();
+        Long left = stack.pop();
+        stack.push((left < right) ? 1L : 0L);
+    }
+
+    private void gtOp() {
+        Long right = stack.pop();
+        Long left = stack.pop();
+        stack.push((left > right) ? 1L : 0L);
+    }
+
+    private void leOp() {
+        Long right = stack.pop();
+        Long left = stack.pop();
+        stack.push((left <= right) ? 1L : 0L);
+    }
+
+    private void geOp() {
+        Long right = stack.pop();
+        Long left = stack.pop();
+        stack.push((left >= right) ? 1L : 0L);
+    }
+
+
     //создание массива
-    private void ArrayCreate(String name) {
+    private void arrayCreate(String name) {
         Long size = stack.pop();
         manager.allocate(name, new MemoryObject(ObjectType.ARRAY, new Long[size.intValue()]));
     }
 
     // запись в массив
-    private void ArrayStoreOp(String arrayName, long index) {
+    private void arrayStoreOp(String arrayName) {
         Long value = stack.pop();
+        long index = stack.pop();
         manager.writeToArray(arrayName, (int)index, value);
     }
 
     // чтение из массива
-    private void ArrayLoadOp(String arrayName, long index) {
+    private void arrayLoadOp(String arrayName) {
+        long index = stack.pop();
         stack.push(manager.readFromArray(arrayName, (int)index));
+    }
+
+    private void jump(String label) {
+        pc = manager.resolveLabel(label);
+    }
+
+    private void jumpIfFalse(String label) {
+        Long value = stack.pop();
+        if (value == 0L) {
+            jump(label);
+        }
     }
 }
