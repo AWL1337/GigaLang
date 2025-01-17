@@ -2,29 +2,34 @@ package org.itmo.VM;
 
 import org.itmo.VM.instructions.Instruction;
 import org.itmo.VM.instructions.InstructionType;
+import org.itmo.VM.memory.FunctionInfo;
 import org.itmo.VM.memory.Manager;
 import org.itmo.VM.memory.object.MemoryObject;
 import org.itmo.VM.memory.object.ObjectType;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 
 public class VirtualMachine {
     private final Manager manager = new Manager();
 
-    private final Stack<Long> stack;
+    private final Map<String, FunctionInfo> functions = new HashMap<>();
+
+    private final Stack<Integer> callStack = new Stack<>();
+    private final Stack<Stack<Long>> stackStack = new Stack<>();
 
     private Integer pc = 0;
 
     public VirtualMachine(Stack<Long> stack) {
-        this.stack = stack;
+        stackStack.push(stack);
     }
 
     public VirtualMachine() {
         this(new Stack<>());
     }
-
 
     public void interpret(List<Instruction> instructions) {
         searchLabels(instructions);
@@ -32,8 +37,13 @@ public class VirtualMachine {
         while (pc < instructions.size()) {
             Instruction instruction = instructions.get(pc);
             pc++;
-            execute(instruction);
+            var handler = execute(instruction);
+            handler.run();
         }
+    }
+
+    private Stack<Long> getCurrentStack() {
+        return stackStack.peek();
     }
 
     private void searchLabels(List<Instruction> instructions) {
@@ -45,243 +55,209 @@ public class VirtualMachine {
         }
     }
 
-    public void execute(Instruction instruction) {
-        switch (instruction.getType()) {
-            case STORE:
-                storeOp(instruction.getName());
-                break;
-
-            case LOAD_VAR:
-                loadVariable(instruction.getName());
-                break;
-
-            case PUSH:
-                push(instruction.getValue());
-                break;
-
-            case ADD:
-                addOp();
-                break;
-
-            case SUB:
-                subOp();
-                break;
-
-            case MUL:
-                mulOp();
-                break;
-
-            case DIV:
-                divOp();
-                break;
-
-            case MOD:
-                modOp();
-                break;
-
-            case AND:
-                andOp();
-                break;
-
-            case OR:
-                orOp();
-                break;
-
-            case NOT:
-                notOp();
-                break;
-
-            case EQ:
-                eqOp();
-                break;
-
-            case NE:
-                neOp();
-                break;
-
-            case LT:
-                ltOp();
-                break;
-
-            case GT:
-                gtOp();
-                break;
-
-            case LE:
-                leOp();
-                break;
-
-            case GE:
-                geOp();
-                break;
-
-            case ARRAY_CREATE:
-                arrayCreate(instruction.getName());
-                break;
-
-            case ARRAY_LOAD:
-                arrayLoadOp(instruction.getName());
-                break;
-
-            case ARRAY_STORE:
-                arrayStoreOp(instruction.getName());
-                break;
-
-            case LABEL:
-                break;
-
-            case JUMP:
-                jump(instruction.getName());
-                break;
-
-            case JUMP_IF_FALSE:
-                jumpIfFalse(instruction.getName());
-                break;
-
-            default:
-                throw new IllegalArgumentException("Unknown instruction type: " + instruction.getType());
-        }
+    private Runnable execute(Instruction instruction) {
+        return switch (instruction.getType()) {
+            case STORE -> () -> storeOp(instruction.getName());
+            case LOAD_VAR -> () -> loadVariable(instruction.getName());
+            case PUSH -> () -> push(instruction.getValue());
+            case ADD -> this::addOp;
+            case SUB -> this::subOp;
+            case MUL -> this::mulOp;
+            case DIV -> this::divOp;
+            case MOD -> this::modOp;
+            case AND -> this::andOp;
+            case OR -> this::orOp;
+            case NOT -> this::notOp;
+            case EQ -> this::eqOp;
+            case NE -> this::neOp;
+            case LT -> this::ltOp;
+            case GT -> this::gtOp;
+            case LE -> this::leOp;
+            case GE -> this::geOp;
+            case ARRAY_CREATE -> () -> arrayCreate(instruction.getName());
+            case ARRAY_LOAD -> () -> arrayLoadOp(instruction.getName());
+            case ARRAY_STORE -> () -> arrayStoreOp(instruction.getName());
+            case LABEL -> () -> {};
+            case JUMP -> () -> jumpOp(instruction.getName());
+            case JUMP_IF_FALSE -> () -> jumpIfFalseOp(instruction.getName());
+            case FUN -> () -> funOp(instruction);
+            case CALL -> () -> callOp(instruction.getName());
+            case RETURN -> this::returnOp;
+            case END_FUN -> this::funEndOp;
+            default -> throw new IllegalArgumentException("Unknown instruction type: " + instruction.getType());
+        };
     }
 
     private void push(Long value) {
-        stack.push(value);
+        getCurrentStack().push(value);
     }
 
     // сохранить переменную в стеке
     private void storeOp(String name) {
-        var value = new MemoryObject(ObjectType.LONG, stack.pop());
+        var value = new MemoryObject(ObjectType.LONG, getCurrentStack().pop());
         manager.allocate(name, value);
     }
 
     // получить значение переменной по имени
     private void loadVariable(String name) {
         Long value = manager.getLong(name);
-        stack.push(value);
+        getCurrentStack().push(value);
     }
 
     // сложение
     private void addOp() {
-        Long right = stack.pop();
-        Long left = stack.pop();
-        stack.push(left + right);
+        Long right = getCurrentStack().pop();
+        Long left = getCurrentStack().pop();
+        getCurrentStack().push(left + right);
     }
 
     // вычитание
     private void subOp() {
-        Long right = stack.pop();
-        Long left = stack.pop();
-        stack.push(left - right);
+        Long right = getCurrentStack().pop();
+        Long left = getCurrentStack().pop();
+        getCurrentStack().push(left - right);
     }
 
     // умножение
     private void mulOp() {
-        Long right = stack.pop();
-        Long left = stack.pop();
-        stack.push(left * right);
+        Long right = getCurrentStack().pop();
+        Long left = getCurrentStack().pop();
+        getCurrentStack().push(left * right);
     }
 
     // деление
     private void divOp() {
-        Long right = stack.pop();
-        Long left = stack.pop();
+        Long right = getCurrentStack().pop();
+        Long left = getCurrentStack().pop();
         if (right == 0) {
             throw new ArithmeticException("division by zero");
         }
-        stack.push(left / right);
+        getCurrentStack().push(left / right);
     }
 
     // нахождение остатка
     private void modOp() {
-        Long right = stack.pop();
-        Long left = stack.pop();
-        stack.push(left % right);
+        Long right = getCurrentStack().pop();
+        Long left = getCurrentStack().pop();
+        getCurrentStack().push(left % right);
     }
 
     // логическая операция and
     private void andOp() {
-        Long right = stack.pop();
-        Long left = stack.pop();
-        stack.push((left != 0 && right != 0) ? 1L : 0L);
+        Long right = getCurrentStack().pop();
+        Long left = getCurrentStack().pop();
+        getCurrentStack().push((left != 0 && right != 0) ? 1L : 0L);
     }
 
     // логическая операция or
     private void orOp() {
-        Long right = stack.pop();
-        Long left = stack.pop();
-        stack.push((left != 0 || right != 0) ? 1L : 0L);
+        Long right = getCurrentStack().pop();
+        Long left = getCurrentStack().pop();
+        getCurrentStack().push((left != 0 || right != 0) ? 1L : 0L);
     }
 
     // логическая операция not
     private void notOp() {
-        Long value = stack.pop();
-        stack.push((value == 0) ? 1L : 0L);
+        Long value = getCurrentStack().pop();
+        getCurrentStack().push((value == 0) ? 1L : 0L);
     }
 
     private void eqOp() {
-        Long right = stack.pop();
-        Long left = stack.pop();
-        stack.push(left.equals(right) ? 1L : 0L);
+        Long right = getCurrentStack().pop();
+        Long left = getCurrentStack().pop();
+        getCurrentStack().push(left.equals(right) ? 1L : 0L);
     }
 
     private void neOp() {
-        Long right = stack.pop();
-        Long left = stack.pop();
-        stack.push(left.equals(right) ? 0L : 1L);
+        Long right = getCurrentStack().pop();
+        Long left = getCurrentStack().pop();
+        getCurrentStack().push(left.equals(right) ? 0L : 1L);
     }
 
 
     private void ltOp() {
-        Long right = stack.pop();
-        Long left = stack.pop();
-        stack.push((left < right) ? 1L : 0L);
+        Long right = getCurrentStack().pop();
+        Long left = getCurrentStack().pop();
+        getCurrentStack().push((left < right) ? 1L : 0L);
     }
 
     private void gtOp() {
-        Long right = stack.pop();
-        Long left = stack.pop();
-        stack.push((left > right) ? 1L : 0L);
+        Long right = getCurrentStack().pop();
+        Long left = getCurrentStack().pop();
+        getCurrentStack().push((left > right) ? 1L : 0L);
     }
 
     private void leOp() {
-        Long right = stack.pop();
-        Long left = stack.pop();
-        stack.push((left <= right) ? 1L : 0L);
+        Long right = getCurrentStack().pop();
+        Long left = getCurrentStack().pop();
+        getCurrentStack().push((left <= right) ? 1L : 0L);
     }
 
     private void geOp() {
-        Long right = stack.pop();
-        Long left = stack.pop();
-        stack.push((left >= right) ? 1L : 0L);
+        Long right = getCurrentStack().pop();
+        Long left = getCurrentStack().pop();
+        getCurrentStack().push((left >= right) ? 1L : 0L);
     }
 
 
     //создание массива
     private void arrayCreate(String name) {
-        Long size = stack.pop();
+        Long size = getCurrentStack().pop();
         manager.allocate(name, new MemoryObject(ObjectType.ARRAY, new Long[size.intValue()]));
     }
 
     // запись в массив
     private void arrayStoreOp(String arrayName) {
-        Long value = stack.pop();
-        long index = stack.pop();
+        Long value = getCurrentStack().pop();
+        long index = getCurrentStack().pop();
         manager.writeToArray(arrayName, (int)index, value);
     }
 
     // чтение из массива
     private void arrayLoadOp(String arrayName) {
-        long index = stack.pop();
-        stack.push(manager.readFromArray(arrayName, (int)index));
+        long index = getCurrentStack().pop();
+        getCurrentStack().push(manager.readFromArray(arrayName, (int)index));
     }
 
-    private void jump(String label) {
+    private void jumpOp(String label) {
         pc = manager.resolveLabel(label);
     }
 
-    private void jumpIfFalse(String label) {
-        Long value = stack.pop();
+    private void jumpIfFalseOp(String label) {
+        Long value = getCurrentStack().pop();
         if (value == 0L) {
-            jump(label);
+            jumpOp(label);
         }
     }
+
+    private void funOp(Instruction instruction) {
+        functions.put(instruction.getName(),
+                new FunctionInfo(instruction.getName(), pc + 1, instruction.getArguments()));
+    }
+
+    private void callOp(String functionName) {
+        manager.createScope();
+        var stack = getCurrentStack();
+        var info = functions.get(functionName);
+        info.getParameters().reversed().forEach(arg ->
+            manager.allocate(arg, new MemoryObject(ObjectType.LONG, stack.pop()))
+        );
+        stackStack.push(new Stack<>());
+        callStack.push(pc + 1);
+    }
+
+    private void returnOp() {
+        manager.deleteScope();
+        var stack = getCurrentStack();
+        stackStack.pop();
+        getCurrentStack().push(stack.pop());
+        pc = callStack.pop();
+    }
+
+    private void funEndOp() {
+        manager.deleteScope();
+        stackStack.pop();
+        pc = callStack.pop();
+    }
+
 }

@@ -24,7 +24,7 @@ public class VirtualMachineTest {
 
     @Test
     public void pushTest() {
-        virtualMachine.execute(new Instruction(InstructionType.PUSH, null, 3L));
+        virtualMachine.interpret(List.of(new Instruction(InstructionType.PUSH, null, 3L)));
 
         assertEquals(1, stack.size());
         assertEquals(3L, stack.pop());
@@ -35,7 +35,7 @@ public class VirtualMachineTest {
         stack.push(2L);
         stack.push(1L);
 
-        virtualMachine.execute(new Instruction(InstructionType.ADD, null, null));
+        virtualMachine.interpret(List.of(new Instruction(InstructionType.ADD, null, null)));
 
         assertEquals(1, stack.size());
         assertEquals(3L, stack.pop());
@@ -46,7 +46,7 @@ public class VirtualMachineTest {
         stack.push(1L);
         stack.push(6L);
 
-        virtualMachine.execute(new Instruction(InstructionType.SUB, null, null));
+        virtualMachine.interpret(List.of(new Instruction(InstructionType.SUB, null, null)));
 
         assertEquals(1, stack.size());
         assertEquals(-5L, stack.pop());
@@ -57,7 +57,7 @@ public class VirtualMachineTest {
         stack.push(1L);
         stack.push(0L);
 
-        virtualMachine.execute(new Instruction(InstructionType.AND, null, null));
+        virtualMachine.interpret(List.of(new Instruction(InstructionType.AND, null, null)));
 
         assertEquals(1, stack.size());
         assertEquals(0L, stack.pop());
@@ -68,7 +68,7 @@ public class VirtualMachineTest {
         stack.push(1L);
         stack.push(0L);
 
-        virtualMachine.execute(new Instruction(InstructionType.OR, null, null));
+        virtualMachine.interpret(List.of(new Instruction(InstructionType.OR, null, null)));
 
         assertEquals(1, stack.size());
         assertEquals(1L, stack.pop());
@@ -79,7 +79,7 @@ public class VirtualMachineTest {
         stack.push(56L);
         stack.push(0L);
 
-        virtualMachine.execute(new Instruction(InstructionType.GT, null, null));
+        virtualMachine.interpret(List.of(new Instruction(InstructionType.GT, null, null)));
 
         assertEquals(1, stack.size());
         assertEquals(1L, stack.pop());
@@ -90,7 +90,7 @@ public class VirtualMachineTest {
         stack.push(56L);
         stack.push(0L);
 
-        virtualMachine.execute(new Instruction(InstructionType.LT, null, null));
+        virtualMachine.interpret(List.of(new Instruction(InstructionType.LT, null, null)));
 
         assertEquals(1, stack.size());
         assertEquals(0L, stack.pop());
@@ -101,7 +101,7 @@ public class VirtualMachineTest {
         stack.push(56L);
         stack.push(56L);
 
-        virtualMachine.execute(new Instruction(InstructionType.LE, null, null));
+        virtualMachine.interpret(List.of(new Instruction(InstructionType.LE, null, null)));
 
         assertEquals(1, stack.size());
         assertEquals(1L, stack.pop());
@@ -111,11 +111,11 @@ public class VirtualMachineTest {
     public void storeLoadVariableTest() {
         stack.push(6L);
 
-        virtualMachine.execute(new Instruction(InstructionType.STORE, "aaa", null));
+        virtualMachine.interpret(List.of(new Instruction(InstructionType.STORE, "aaa", null)));
 
         assertEquals(0, stack.size());
 
-        virtualMachine.execute(new Instruction(InstructionType.LOAD_VAR, "aaa", null));
+        virtualMachine.interpret(List.of(new Instruction(InstructionType.LOAD_VAR, "aaa", null)));
 
         assertEquals(1, stack.size());
         assertEquals(6L, stack.pop());
@@ -236,6 +236,32 @@ public class VirtualMachineTest {
 
         assertEquals(1, stack.size());
         assertEquals(4L, stack.pop());
+    }
+
+    @Test
+    public void whileTest() {
+
+        List<Instruction> whileLoop = List.of(
+                new Instruction(InstructionType.PUSH, null, 3L),
+                new Instruction(InstructionType.STORE, "a", null),
+                new Instruction(InstructionType.LABEL, "0", null),
+                new Instruction(InstructionType.LOAD_VAR, "a", null),
+                new Instruction(InstructionType.PUSH, null, 6L),
+                new Instruction(InstructionType.LT, null, null),
+                new Instruction(InstructionType.JUMP_IF_FALSE, "1", null),
+                new Instruction(InstructionType.LOAD_VAR, "a", null),
+                new Instruction(InstructionType.PUSH, null, 1L),
+                new Instruction(InstructionType.ADD, null, null),
+                new Instruction(InstructionType.STORE, "a", null),
+                new Instruction(InstructionType.PUSH, null, 0L),
+                new Instruction(InstructionType.JUMP, "0", null),
+                new Instruction(InstructionType.LABEL, "1", null)
+        );
+
+        virtualMachine.interpret(whileLoop);
+
+        assertEquals(3, stack.size());
+        assertEquals(List.of(0L, 0L, 0L), stack);
     }
 
 

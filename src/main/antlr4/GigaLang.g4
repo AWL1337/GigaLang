@@ -95,6 +95,7 @@ elseStatement: statement+;
 returnStatement: RETURN expression SEMI;
 
 expressionList: expression (COM expression)*;
+expressionFunctionCallList: (expression (COM expression)*) | expression?;
 idList: (ID (COM ID)*) | ID?;
 
 whileStatement: WHILE LPAREN booleanExpression RPAREN LBRACE statement+ RBRACE;
@@ -109,5 +110,6 @@ expression:
     | LPAREN expression RPAREN          # ParenExpression
     | INT                               # IntLiteral
     | ID SLPAREN expression SRPAREN     # ReadArray
+    | ID LPAREN expressionFunctionCallList RPAREN   # FunctionCall
     | ID                                # Variable
     ;
