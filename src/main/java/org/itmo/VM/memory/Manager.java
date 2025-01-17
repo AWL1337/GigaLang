@@ -16,12 +16,25 @@ public class Manager {
 
     private final Stack<Map<String, Identifier>> stack = new Stack<>();
 
+    private final Map<String, Integer> labels = new HashMap<>();
+
     private final List<MemoryObject> heap = new LinkedList<>();
 
     private final GarbageCollector garbageCollector = new GarbageCollector(this);
 
     private final Long MAX_TRIGGER_OBJECTS = 1000L;
 
+
+    public void makeLabel(String label, Integer index) {
+        labels.put(label, index);
+    }
+
+    public Integer resolveLabel(String label) {
+        if (!labels.containsKey(label)) {
+            throw new IllegalArgumentException("Label " + label + " not found");
+        }
+        return labels.get(label);
+    }
 
     // создать или изменить переменную по имени
     public void allocate(String name, MemoryObject object) {

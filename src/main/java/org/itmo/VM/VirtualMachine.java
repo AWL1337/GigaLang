@@ -1,14 +1,11 @@
 package org.itmo.VM;
 
 import org.itmo.VM.instructions.Instruction;
-import org.itmo.VM.instructions.InstructionType;
 import org.itmo.VM.memory.Manager;
 import org.itmo.VM.memory.object.MemoryObject;
 import org.itmo.VM.memory.object.ObjectType;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 
 
@@ -17,7 +14,14 @@ public class VirtualMachine {
 
     public final Stack<Long> stack = new Stack<>();
 
-    private final Map<String, List<Instruction>> instructionCache = new HashMap<>();
+    private Integer pc = 0;
+
+    public void interpret(List<Instruction> instructions) {
+        while (pc < instructions.size()) {
+            Instruction instruction = instructions.get(pc);
+            pc++;
+        }
+    }
 
     public void execute(Instruction instruction) {
         switch (instruction.getType()) {
@@ -69,31 +73,11 @@ public class VirtualMachine {
                 break;
 
             case ARRAY_LOAD:
-                ArrayLoadOp(instruction.getName(), instruction.getIndex());
+                ArrayLoadOp(instruction.getName(), instruction.getValue());
                 break;
 
             case ARRAY_STORE:
-                ArrayStoreOp(instruction.getName(), instruction.getIndex());
-                break;
-
-            case FOR:
-                ForLoop(instruction.getBody());
-                break;
-
-            case WHILE:
-                WhileLoop(instruction.getBody());
-                break;
-
-            case FUNCTION_DEF:
-                DefineFunction(instruction.getName(), instruction.getBody());
-                break;
-
-            case FUNCTION_CALL:
-                CallFunction(instruction.getName());
-                break;
-
-            case RETURN:
-                ReturnOp();
+                ArrayStoreOp(instruction.getName(), instruction.getValue());
                 break;
 
             default:
@@ -182,80 +166,13 @@ public class VirtualMachine {
     }
 
     // запись в массив
-    private void ArrayStoreOp(String arrayName, int index) {
+    private void ArrayStoreOp(String arrayName, long index) {
         Long value = stack.pop();
-        manager.writeToArray(arrayName, index, value);
+        manager.writeToArray(arrayName, (int)index, value);
     }
 
     // чтение из массива
-    private void ArrayLoadOp(String arrayName, int index) {
-        stack.push(manager.readFromArray(arrayName, index));
+    private void ArrayLoadOp(String arrayName, long index) {
+        stack.push(manager.readFromArray(arrayName, (int)index));
     }
-
-    // цикл for
-    private void ForLoop(List<Instruction> body) {
-        Long limit = stack.pop();
-        Long start = stack.pop();
-
-        String cacheKey = "FOR:" + body.hashCode();
-        List<Instruction> cachedBody = instructionCache.computeIfAbsent(cacheKey, k -> body);
-
-        for (long i = start; i < limit; i++) {
-            manager.createScope();
-            stack.push(i);
-
-            for (Instruction instr : cachedBody) {
-                execute(instr);
-            }
-
-            manager.deleteScope();
-        }
-    }
-
-    // цикл while
-    private void WhileLoop(List<Instruction> body) {
-        String cacheKey = "WHILE:" + body.hashCode();
-        List<Instruction> cachedBody = instructionCache.computeIfAbsent(cacheKey, k -> body);
-
-        while (stack.pop() != 0) {
-            manager.createScope();
-
-            for (Instruction instr : cachedBody) {
-                execute(instr);
-            }
-
-            manager.deleteScope();
-        }
-    }
-
-    // определение функции
-    private void DefineFunction(String functionName, List<Instruction> body) {
-        instructionCache.put("FUNC:" + functionName, body);
-    }
-
-    // вызов функции
-    private void CallFunction(String functionName) {
-        List<Instruction> body = instructionCache.get("FUNC:" + functionName);
-        if (body == null) {
-            throw new IllegalArgumentException("function not defined: " + functionName);
-        }
-
-        manager.createScope();
-        for (Instruction instr : body) {
-            if (instr.getType() == InstructionType.RETURN) {
-                execute(instr);
-                break;
-            } else {
-                execute(instr);
-            }
-        }
-    }
-
-    // возврат из функции
-    private void ReturnOp() {
-        Long returnValue = stack.pop();
-        manager.deleteScope();
-        stack.push(returnValue);
-    }
-
 }

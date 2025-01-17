@@ -1,20 +1,29 @@
 package org.itmo;
 
-import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.itmo.antlr.MyLanguageLexer;
-import org.itmo.antlr.MyLanguageParser;
+import org.itmo.VM.instructions.Instruction;
+import org.itmo.antlr.GigaLangLexer;
+import org.itmo.antlr.GigaLangParser;
+import org.itmo.generator.ByteCodeGenerator;
+
+import java.util.List;
+
 
 public class Main {
     public static void main(String[] args) {
-        String code = "var arr = [2, 2, 8]; print arr[0] + arr[1];";
-        System.out.println("code: " + code);
-        CharStream input = org.antlr.v4.runtime.CharStreams.fromString(code);
-        MyLanguageLexer lexer = new MyLanguageLexer(input);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        MyLanguageParser parser = new MyLanguageParser(tokens);
-        ParseTree tree = parser.prog();
-        System.out.println("Parse Tree: " + tree.toStringTree(parser));
+        String input = "if (a > 0) { var b = 3\n }\n";
+        GigaLangLexer lexer = new GigaLangLexer(CharStreams.fromString(input));
+        GigaLangParser parser = new GigaLangParser(new CommonTokenStream(lexer));
+        ParseTree tree = parser.program();
+
+        ByteCodeGenerator generator = new ByteCodeGenerator();
+        generator.visit(tree);
+
+        List<Instruction> instructions = generator.getInstructions();
+        for (Instruction instruction : instructions) {
+            System.out.println(instruction);
+        }
     }
 }
