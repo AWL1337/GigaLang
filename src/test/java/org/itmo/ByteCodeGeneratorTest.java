@@ -231,10 +231,10 @@ public class ByteCodeGeneratorTest {
                 new Instruction(InstructionType.LOAD_VAR, "a", null),
                 new Instruction(InstructionType.PUSH, null, 0L),
                 new Instruction(InstructionType.GT, null, null),
-                new Instruction(InstructionType.JUMP_IF_FALSE, "0", null),
+                new Instruction(InstructionType.JUMP_IF_FALSE, "if_0", null),
                 new Instruction(InstructionType.PUSH, null, 5L),
                 new Instruction(InstructionType.STORE, "c", null),
-                new Instruction(InstructionType.LABEL, "0", null)
+                new Instruction(InstructionType.LABEL, "if_0", null)
         );
 
         assertEquals(expected, generator.getInstructions());
@@ -254,14 +254,14 @@ public class ByteCodeGeneratorTest {
                 new Instruction(InstructionType.LOAD_VAR, "a", null),
                 new Instruction(InstructionType.PUSH, null, 0L),
                 new Instruction(InstructionType.GT, null, null),
-                new Instruction(InstructionType.JUMP_IF_FALSE, "0", null),
+                new Instruction(InstructionType.JUMP_IF_FALSE, "if_0", null),
                 new Instruction(InstructionType.PUSH, null, 5L),
                 new Instruction(InstructionType.STORE, "c", null),
-                new Instruction(InstructionType.JUMP, "1", null),
-                new Instruction(InstructionType.LABEL, "0", null),
+                new Instruction(InstructionType.JUMP, "if_1", null),
+                new Instruction(InstructionType.LABEL, "if_0", null),
                 new Instruction(InstructionType.PUSH, null, 4L),
                 new Instruction(InstructionType.STORE, "c", null),
-                new Instruction(InstructionType.LABEL, "1", null)
+                new Instruction(InstructionType.LABEL, "if_1", null)
         );
 
         assertEquals(expected, generator.getInstructions());
@@ -280,17 +280,17 @@ public class ByteCodeGeneratorTest {
         List<Instruction> expected = List.of(
                 new Instruction(InstructionType.PUSH, null, 3L),
                 new Instruction(InstructionType.STORE, "a", null),
-                new Instruction(InstructionType.LABEL, "0", null),
+                new Instruction(InstructionType.LABEL, "loop_0", null),
                 new Instruction(InstructionType.LOAD_VAR, "a", null),
                 new Instruction(InstructionType.PUSH, null, 6L),
                 new Instruction(InstructionType.LT, null, null),
-                new Instruction(InstructionType.JUMP_IF_FALSE, "1", null),
+                new Instruction(InstructionType.JUMP_IF_FALSE, "loop_1", null),
                 new Instruction(InstructionType.LOAD_VAR, "a", null),
                 new Instruction(InstructionType.PUSH, null, 1L),
                 new Instruction(InstructionType.ADD, null, null),
                 new Instruction(InstructionType.STORE, "a", null),
-                new Instruction(InstructionType.JUMP, "0", null),
-                new Instruction(InstructionType.LABEL, "1", null)
+                new Instruction(InstructionType.JUMP, "loop_0", null),
+                new Instruction(InstructionType.LABEL, "loop_1", null)
         );
 
         assertEquals(expected, generator.getInstructions());
@@ -333,15 +333,41 @@ public class ByteCodeGeneratorTest {
                 new Instruction(InstructionType.LOAD_VAR, "a", null),
                 new Instruction(InstructionType.PUSH, null, 4L),
                 new Instruction(InstructionType.GT, null, null),
-                new Instruction(InstructionType.JUMP_IF_FALSE, "0", null),
+                new Instruction(InstructionType.JUMP_IF_FALSE, "if_0", null),
                 new Instruction(InstructionType.PUSH, null, 1L),
                 new Instruction(InstructionType.RETURN, null, null),
-                new Instruction(InstructionType.LABEL, "0", null),
+                new Instruction(InstructionType.LABEL, "if_0", null),
                 new Instruction(InstructionType.LOAD_VAR, "b", null),
                 new Instruction(InstructionType.LOAD_VAR, "c", null),
                 new Instruction(InstructionType.ADD, null, null),
                 new Instruction(InstructionType.RETURN, null, null),
                 new Instruction(InstructionType.END_FUN, null, null)
+        );
+
+        assertEquals(expected, generator.getInstructions());
+    }
+
+
+    @Test
+    public void funCalTest() {
+        String input = "c = aboba(15 + 4 *5, 5, ff);";
+        GigaLangLexer lexer = new GigaLangLexer(CharStreams.fromString(input));
+        GigaLangParser parser = new GigaLangParser(new CommonTokenStream(lexer));
+        ParseTree tree = parser.program();
+
+        ByteCodeGenerator generator = new ByteCodeGenerator();
+        generator.visit(tree);
+
+        List<Instruction> expected = List.of(
+                new Instruction(InstructionType.PUSH, null, 15L),
+                new Instruction(InstructionType.PUSH, null, 4L),
+                new Instruction(InstructionType.PUSH, null, 5L),
+                new Instruction(InstructionType.MUL, null, null),
+                new Instruction(InstructionType.ADD, null, null),
+                new Instruction(InstructionType.PUSH, null, 5L),
+                new Instruction(InstructionType.LOAD_VAR, "ff", null),
+                new Instruction(InstructionType.CALL, "aboba", null),
+                new Instruction(InstructionType.STORE, "c", null)
         );
 
         assertEquals(expected, generator.getInstructions());

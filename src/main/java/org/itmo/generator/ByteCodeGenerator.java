@@ -15,10 +15,16 @@ public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
     private final List<Instruction> instructions = new ArrayList<>();
     private Long uniqLabelId = 0L;
 
-    private String getNewLabel() {
+    private String getNewIfLabel() {
         Long currentLabelId = uniqLabelId;
         uniqLabelId++;
-        return currentLabelId.toString();
+        return "if_" + currentLabelId;
+    }
+
+    private String getNewLoopLabel() {
+        Long currentLabelId = uniqLabelId;
+        uniqLabelId++;
+        return "loop_" + currentLabelId;
     }
 
     @Override
@@ -175,6 +181,17 @@ public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
         return null;
     }
 
+    @Override
+    public Void visitFunctionCall(GigaLangParser.FunctionCallContext ctx) {
+        ctx.expressionFunctionCallList().expression().forEach(this::visit);
+
+        instructions.add(Instruction.builder()
+                .type(InstructionType.CALL)
+                .name(ctx.ID().getText())
+                .build());
+        return null;
+    }
+
     //relational
     @Override
     public Void visitGtExpression(GigaLangParser.GtExpressionContext ctx) {
@@ -280,7 +297,7 @@ public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
     public Void visitIfStatement(GigaLangParser.IfStatementContext ctx) {
         visit(ctx.booleanExpression());
 
-        String endLabel = getNewLabel();
+        String endLabel = getNewIfLabel();
 
         Instruction jump = Instruction.builder()
                 .type(InstructionType.JUMP_IF_FALSE)
@@ -303,8 +320,8 @@ public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
     public Void visitIfElseStatement(GigaLangParser.IfElseStatementContext ctx) {
         visit(ctx.booleanExpression());
 
-        String elseLabel = getNewLabel();
-        String endLabel = getNewLabel();
+        String elseLabel = getNewIfLabel();
+        String endLabel = getNewIfLabel();
 
         Instruction jumpElse = Instruction.builder()
                 .type(InstructionType.JUMP_IF_FALSE)
@@ -341,8 +358,8 @@ public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
 
     @Override
     public Void visitWhileStatement(GigaLangParser.WhileStatementContext ctx) {
-        String startLoopLabel = getNewLabel();
-        String endLoopLabel = getNewLabel();
+        String startLoopLabel = getNewLoopLabel();
+        String endLoopLabel = getNewLoopLabel();
 
         Instruction startLabel = Instruction.builder()
                 .type(InstructionType.LABEL)
