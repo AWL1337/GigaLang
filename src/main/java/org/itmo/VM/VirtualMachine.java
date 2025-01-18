@@ -259,7 +259,7 @@ public class VirtualMachine {
             manager.allocate(arg, new MemoryObject(ObjectType.LONG, stack.pop()))
         );
         stackStack.push(new Stack<>());
-        callStack.push(pc + 1);
+        callStack.push(pc);
         pc = info.getStart();
     }
 

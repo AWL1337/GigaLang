@@ -59,6 +59,7 @@ statement:
     | whileStatement
     | booleanExpression
     | relationalExpression
+    | expression
     | functionDefinition
     | returnStatement
     | printStatement

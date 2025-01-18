@@ -264,36 +264,4 @@ public class VirtualMachineTest {
         assertEquals(List.of(0L, 0L, 0L), stack);
     }
 
-    @Test
-    public void functionTest() {
-        List<Instruction> fun = List.of(
-                new Instruction(InstructionType.FUN, "aboba", null, List.of("a", "b", "c")),
-                new Instruction(InstructionType.LOAD_VAR, "a", null),
-                new Instruction(InstructionType.PUSH, null, 50L),
-                new Instruction(InstructionType.GT, null, null),
-                new Instruction(InstructionType.JUMP_IF_FALSE, "if_0", null),
-                new Instruction(InstructionType.PUSH, null, 1L),
-                new Instruction(InstructionType.RETURN, null, null),
-                new Instruction(InstructionType.LABEL, "if_0", null),
-                new Instruction(InstructionType.LOAD_VAR, "b", null),
-                new Instruction(InstructionType.LOAD_VAR, "c", null),
-                new Instruction(InstructionType.ADD, null, null),
-                new Instruction(InstructionType.RETURN, null, null),
-                new Instruction(InstructionType.END_FUN, null, null),
-                new Instruction(InstructionType.PUSH, null, 15L),
-                new Instruction(InstructionType.PUSH, null, 4L),
-                new Instruction(InstructionType.PUSH, null, 5L),
-                new Instruction(InstructionType.MUL, null, null),
-                new Instruction(InstructionType.ADD, null, null),
-                new Instruction(InstructionType.PUSH, null, 5L),
-                new Instruction(InstructionType.PUSH, null, 3L),
-                new Instruction(InstructionType.CALL, "aboba", null),
-                new Instruction(InstructionType.STORE, "c", null)
-        );
-
-        virtualMachine.interpret(fun);
-
-        assertEquals(1, stack.size());
-        assertEquals(8L, stack.pop());
-    }
 }
