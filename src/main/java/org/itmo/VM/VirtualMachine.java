@@ -1,5 +1,6 @@
 package org.itmo.VM;
 
+import lombok.Data;
 import org.itmo.VM.instructions.Instruction;
 import org.itmo.VM.instructions.InstructionType;
 import org.itmo.VM.memory.FunctionInfo;
@@ -7,12 +8,9 @@ import org.itmo.VM.memory.Manager;
 import org.itmo.VM.memory.object.MemoryObject;
 import org.itmo.VM.memory.object.ObjectType;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
-
+@Data
 public class VirtualMachine {
     private final Manager manager = new Manager();
 
@@ -47,10 +45,27 @@ public class VirtualMachine {
     }
 
     private void searchLabels(List<Instruction> instructions) {
+        boolean funFlag = false;
+        FunctionInfo info = null;
         for (int i = 0; i < instructions.size(); i++) {
             Instruction instruction = instructions.get(i);
+
             if (instruction.getType().equals(InstructionType.LABEL)) {
                 manager.makeLabel(instruction.getName(), i);
+            }
+
+            if (instruction.getType().equals(InstructionType.FUN)) {
+                if (funFlag) {
+                    throw new IllegalArgumentException("You cannot declare any function inside a function");
+                }
+                funFlag = true;
+                info = new FunctionInfo(instruction.getName(), i + 1, instruction.getArguments());
+                functions.put(instruction.getName(), info);
+            }
+
+            if (instruction.getType().equals(InstructionType.END_FUN)) {
+                funFlag = false;
+                Objects.requireNonNull(info).setEnd(i + 1);
             }
         }
     }
@@ -80,7 +95,7 @@ public class VirtualMachine {
             case LABEL -> () -> {};
             case JUMP -> () -> jumpOp(instruction.getName());
             case JUMP_IF_FALSE -> () -> jumpIfFalseOp(instruction.getName());
-            case FUN -> () -> funOp(instruction);
+            case FUN -> () -> funOp(instruction.getName());
             case CALL -> () -> callOp(instruction.getName());
             case RETURN -> this::returnOp;
             case END_FUN -> this::funEndOp;
@@ -230,9 +245,8 @@ public class VirtualMachine {
         }
     }
 
-    private void funOp(Instruction instruction) {
-        functions.put(instruction.getName(),
-                new FunctionInfo(instruction.getName(), pc + 1, instruction.getArguments()));
+    private void funOp(String functionName) {
+        pc = functions.get(functionName).getEnd();
     }
 
     private void callOp(String functionName) {
@@ -244,6 +258,7 @@ public class VirtualMachine {
         );
         stackStack.push(new Stack<>());
         callStack.push(pc + 1);
+        pc = info.getStart();
     }
 
     private void returnOp() {
