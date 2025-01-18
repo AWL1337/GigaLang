@@ -9,6 +9,8 @@ ELSE: 'else';
 WHILE: 'while';
 DEF: 'def';
 RETURN: 'return';
+PRINT: 'print';
+PRINTLN: 'println';
 
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
 INT: [0-9]+;
@@ -59,6 +61,8 @@ statement:
     | relationalExpression
     | functionDefinition
     | returnStatement
+    | printStatement
+    | printlnStatement
     ;
 
 variableAssignation: ID ASSIGN expression SEMI;
@@ -101,6 +105,9 @@ idList: (ID (COM ID)*) | ID?;
 whileStatement: WHILE LPAREN booleanExpression RPAREN LBRACE statement+ RBRACE;
 
 functionDefinition: DEF ID LPAREN idList RPAREN LBRACE statement+ RBRACE;
+
+printStatement: PRINT expression SEMI;
+printlnStatement: PRINTLN expression SEMI;
 
 expression:
     expression MOD expression             # ModExpression

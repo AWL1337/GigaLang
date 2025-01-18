@@ -99,6 +99,8 @@ public class VirtualMachine {
             case CALL -> () -> callOp(instruction.getName());
             case RETURN -> this::returnOp;
             case END_FUN -> this::funEndOp;
+            case PRINT -> this::printOp;
+            case PRINTLN -> this::printLnOp;
             default -> throw new IllegalArgumentException("Unknown instruction type: " + instruction.getType());
         };
     }
@@ -273,6 +275,16 @@ public class VirtualMachine {
         manager.deleteScope();
         stackStack.pop();
         pc = callStack.pop();
+    }
+
+    private void printOp() {
+        var value = getCurrentStack().pop();
+        System.out.print(value + " ");
+    }
+
+    private void printLnOp() {
+        var value = getCurrentStack().pop();
+        System.out.println(value);
     }
 
 }

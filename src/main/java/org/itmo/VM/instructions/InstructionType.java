@@ -8,4 +8,5 @@ public enum InstructionType {
     LABEL,
     JUMP, JUMP_IF_FALSE,
     FUN, END_FUN, CALL, RETURN,
+    PRINT, PRINTLN
 }

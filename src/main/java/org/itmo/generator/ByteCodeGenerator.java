@@ -431,4 +431,24 @@ public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
 
         return null;
     }
+
+    @Override
+    public Void visitPrintStatement(GigaLangParser.PrintStatementContext ctx) {
+        visit(ctx.expression());
+        Instruction ret = Instruction.builder()
+                .type(InstructionType.PRINT)
+                .build();
+        instructions.add(ret);
+        return null;
+    }
+
+    @Override
+    public Void visitPrintlnStatement(GigaLangParser.PrintlnStatementContext ctx) {
+        visit(ctx.expression());
+        Instruction ret = Instruction.builder()
+                .type(InstructionType.PRINTLN)
+                .build();
+        instructions.add(ret);
+        return null;
+    }
 }
