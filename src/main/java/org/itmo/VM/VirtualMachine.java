@@ -80,6 +80,7 @@ public class VirtualMachine {
             case MUL -> this::mulOp;
             case DIV -> this::divOp;
             case MOD -> this::modOp;
+            case SQRT -> this::sqrtOp;
             case AND -> this::andOp;
             case OR -> this::orOp;
             case NOT -> this::notOp;
@@ -99,6 +100,8 @@ public class VirtualMachine {
             case CALL -> () -> callOp(instruction.getName());
             case RETURN -> this::returnOp;
             case END_FUN -> this::funEndOp;
+            case PRINT -> this::printOp;
+            case PRINTLN -> this::printLnOp;
             default -> throw new IllegalArgumentException("Unknown instruction type: " + instruction.getType());
         };
     }
@@ -155,6 +158,11 @@ public class VirtualMachine {
         Long right = getCurrentStack().pop();
         Long left = getCurrentStack().pop();
         getCurrentStack().push(left % right);
+    }
+
+    private void sqrtOp() {
+        Long value = getCurrentStack().pop();
+        getCurrentStack().push((long)Math.pow(value, 0.5));
     }
 
     // логическая операция and
@@ -257,7 +265,7 @@ public class VirtualMachine {
             manager.allocate(arg, new MemoryObject(ObjectType.LONG, stack.pop()))
         );
         stackStack.push(new Stack<>());
-        callStack.push(pc + 1);
+        callStack.push(pc);
         pc = info.getStart();
     }
 
@@ -273,6 +281,16 @@ public class VirtualMachine {
         manager.deleteScope();
         stackStack.pop();
         pc = callStack.pop();
+    }
+
+    private void printOp() {
+        var value = getCurrentStack().pop();
+        System.out.print(value + " ");
+    }
+
+    private void printLnOp() {
+        var value = getCurrentStack().pop();
+        System.out.println(value);
     }
 
 }

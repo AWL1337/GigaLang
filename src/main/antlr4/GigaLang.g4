@@ -9,6 +9,8 @@ ELSE: 'else';
 WHILE: 'while';
 DEF: 'def';
 RETURN: 'return';
+PRINT: 'print';
+PRINTLN: 'println';
 
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
 INT: [0-9]+;
@@ -19,6 +21,7 @@ MULT: '*';
 DIV: '/';
 MOD: '%';
 POW: '**';
+SQRT: '√';
 ASSIGN: '=';
 
 GT: '>';
@@ -57,8 +60,11 @@ statement:
     | whileStatement
     | booleanExpression
     | relationalExpression
+    | expression
     | functionDefinition
     | returnStatement
+    | printStatement
+    | printlnStatement
     ;
 
 variableAssignation: ID ASSIGN expression SEMI;
@@ -102,8 +108,12 @@ whileStatement: WHILE LPAREN booleanExpression RPAREN LBRACE statement+ RBRACE;
 
 functionDefinition: DEF ID LPAREN idList RPAREN LBRACE statement+ RBRACE;
 
+printStatement: PRINT expression SEMI;
+printlnStatement: PRINTLN expression SEMI;
+
 expression:
     expression MOD expression             # ModExpression
+    | SQRT expression                     # SqrtExpression
     | expression POW expression           # PowExpression
     | expression (MULT | DIV) expression # MulDivExpression
     | expression (PLUS | MINUS) expression # AddSubExpression

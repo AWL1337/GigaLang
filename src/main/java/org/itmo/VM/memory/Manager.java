@@ -22,7 +22,7 @@ public class Manager {
 
     private final GarbageCollector garbageCollector = new GarbageCollector(this);
 
-    private final Long MAX_TRIGGER_OBJECTS = 1000L;
+    private final Long MAX_TRIGGER_OBJECTS = 10000000L;
 
 
     public void makeLabel(String label, Integer index) {
