@@ -182,6 +182,16 @@ public class ByteCodeGenerator extends GigaLangBaseVisitor<Void> {
     }
 
     @Override
+    public Void visitSqrtExpression(GigaLangParser.SqrtExpressionContext ctx) {
+        visit(ctx.expression());
+
+        instructions.add(Instruction.builder()
+                .type(InstructionType.SQRT)
+                .build());
+        return null;
+    }
+
+    @Override
     public Void visitFunctionCall(GigaLangParser.FunctionCallContext ctx) {
         ctx.expressionFunctionCallList().expression().forEach(this::visit);
 

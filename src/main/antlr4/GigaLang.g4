@@ -21,6 +21,7 @@ MULT: '*';
 DIV: '/';
 MOD: '%';
 POW: '**';
+SQRT: '√';
 ASSIGN: '=';
 
 GT: '>';
@@ -112,6 +113,7 @@ printlnStatement: PRINTLN expression SEMI;
 
 expression:
     expression MOD expression             # ModExpression
+    | SQRT expression                     # SqrtExpression
     | expression POW expression           # PowExpression
     | expression (MULT | DIV) expression # MulDivExpression
     | expression (PLUS | MINUS) expression # AddSubExpression

@@ -1,10 +1,52 @@
 package org.itmo;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Collections;
+
 public class GigaTest {
     private GigaExecutor executor;
+
+    private static String sortArr;
+
+    private static String boolArr;
+
+    private static String generateArray(Integer size, Boolean shuffle, Boolean ones) {
+        List<Integer> numbers = new ArrayList<>();
+
+        for (int i = 0; i < size; i++) {
+            if (ones) {
+                numbers.add(1);
+            } else {
+                numbers.add(i);
+            }
+        }
+
+        if (shuffle) {
+            Collections.shuffle(numbers);
+        }
+
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < numbers.size(); i++) {
+            sb.append(numbers.get(i));
+            if (i < numbers.size() - 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append("]");
+
+        return sb.toString();
+    }
+
+    @BeforeAll
+    public static void init() {
+        sortArr = generateArray(10000, true, false);
+        boolArr = generateArray(100001, false, true);
+    }
 
     @BeforeEach
     public void setUp() {
@@ -29,8 +71,10 @@ public class GigaTest {
 
     @Test
     public void quickSortTest() {
-        String code = """
-                ar = [5, 8, 4, 0, 6];
+        String arrayInit = "ar = " + sortArr + ";";
+
+        String code = arrayInit + """
+                size = 10000;
                 
                 def swap(a, b) {
                   tmp = ar[b];
@@ -73,9 +117,9 @@ public class GigaTest {
                   }
                 }
 
-                quickSort(0, 4)
+                quickSort(0, size - 1)
                 i = 0;
-                while (i < 5) {
+                while (i < size) {
                  print ar[i];
                  i = i + 1;
                 }
@@ -84,5 +128,36 @@ public class GigaTest {
         executor.executeCode(code);
     }
 
+    @Test
+    public void primeTest() {
+        String arrayInit = "boolPrime = " + boolArr + ";";
+
+        String code = arrayInit + """
+                n = 100000;
+                boolPrime[0] = 0;
+                boolPrime[1] = 0;
+                
+                it = 2;
+                while (it < √n + 1) {
+                  if (boolPrime[it] == 1) {
+                    notPrime = it * it;
+                    while (notPrime < n + 1) {
+                      boolPrime[notPrime] = 0;
+                      notPrime = notPrime + it;
+                    }
+                  }
+                  it = it + 1;
+                }
+                
+                it = 0;
+                while (it < n + 1) {
+                  if (boolPrime[it] == 1) {
+                    print it;
+                  }
+                  it = it + 1;
+                }
+                """;
+        executor.executeCode(code);
+    }
 
 }

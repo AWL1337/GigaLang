@@ -80,6 +80,7 @@ public class VirtualMachine {
             case MUL -> this::mulOp;
             case DIV -> this::divOp;
             case MOD -> this::modOp;
+            case SQRT -> this::sqrtOp;
             case AND -> this::andOp;
             case OR -> this::orOp;
             case NOT -> this::notOp;
@@ -157,6 +158,11 @@ public class VirtualMachine {
         Long right = getCurrentStack().pop();
         Long left = getCurrentStack().pop();
         getCurrentStack().push(left % right);
+    }
+
+    private void sqrtOp() {
+        Long value = getCurrentStack().pop();
+        getCurrentStack().push((long)Math.pow(value, 0.5));
     }
 
     // логическая операция and

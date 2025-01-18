@@ -53,6 +53,16 @@ public class VirtualMachineTest {
     }
 
     @Test
+    public void sqrtTest() {
+        stack.push(5L);
+
+        virtualMachine.interpret(List.of(new Instruction(InstructionType.SQRT, null, null)));
+
+        assertEquals(1, stack.size());
+        assertEquals(2L, stack.pop());
+    }
+
+    @Test
     public void andTest() {
         stack.push(1L);
         stack.push(0L);
