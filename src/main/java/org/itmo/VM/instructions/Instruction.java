@@ -13,7 +13,13 @@ import java.util.List;
 @Builder
 public class Instruction {
     private final InstructionType type; // тип команды
-    private final String name; // имя переменной
+    private String name; // имя переменной
     private final Long value;
     private List<String> arguments;
+
+    public Instruction(InstructionType type, String name, Long value) {
+        this.type = type;
+        this.name = name;
+        this.value = value;
+    }
 }

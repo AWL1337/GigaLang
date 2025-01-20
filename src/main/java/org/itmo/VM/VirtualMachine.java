@@ -1,6 +1,8 @@
 package org.itmo.VM;
 
 import lombok.Data;
+import org.itmo.VM.JIT.CodeBlock;
+import org.itmo.VM.JIT.Compiler;
 import org.itmo.VM.instructions.Instruction;
 import org.itmo.VM.instructions.InstructionType;
 import org.itmo.VM.memory.FunctionInfo;
@@ -13,11 +15,15 @@ import java.util.*;
 @Data
 public class VirtualMachine {
     private final Manager manager = new Manager();
+    private final Compiler compiler = new Compiler(this);
 
     private final Map<String, FunctionInfo> functions = new HashMap<>();
+    private final List<CodeBlock> blocks = new ArrayList<>();
 
     private final Stack<Integer> callStack = new Stack<>();
     private final Stack<Stack<Long>> stackStack = new Stack<>();
+
+    private final Integer hotRegionThreshold = 13;
 
     private Integer pc = 0;
 
@@ -33,6 +39,20 @@ public class VirtualMachine {
         searchLabels(instructions);
         pc = 0;
         while (pc < instructions.size()) {
+
+            var block = findBlock(pc);
+
+            if (block != null && block.getEntry() >= hotRegionThreshold * block.getInstructions().size()) {
+                block.enter();
+                if (block.getCompiled() == null) {
+                    compiler.compile(block);
+                }
+
+                block.getCompiled().forEach(Runnable::run);
+                pc = block.getEnd() + 1;
+                continue;
+            }
+
             Instruction instruction = instructions.get(pc);
             pc++;
             var handler = execute(instruction);
@@ -40,37 +60,7 @@ public class VirtualMachine {
         }
     }
 
-    private Stack<Long> getCurrentStack() {
-        return stackStack.peek();
-    }
-
-    private void searchLabels(List<Instruction> instructions) {
-        boolean funFlag = false;
-        FunctionInfo info = null;
-        for (int i = 0; i < instructions.size(); i++) {
-            Instruction instruction = instructions.get(i);
-
-            if (instruction.getType().equals(InstructionType.LABEL)) {
-                manager.makeLabel(instruction.getName(), i);
-            }
-
-            if (instruction.getType().equals(InstructionType.FUN)) {
-                if (funFlag) {
-                    throw new IllegalArgumentException("You cannot declare any function inside a function");
-                }
-                funFlag = true;
-                info = new FunctionInfo(instruction.getName(), i + 1, instruction.getArguments());
-                functions.put(instruction.getName(), info);
-            }
-
-            if (instruction.getType().equals(InstructionType.END_FUN)) {
-                funFlag = false;
-                Objects.requireNonNull(info).setEnd(i + 1);
-            }
-        }
-    }
-
-    private Runnable execute(Instruction instruction) {
+    public Runnable execute(Instruction instruction) {
         return switch (instruction.getType()) {
             case STORE -> () -> storeOp(instruction.getName());
             case LOAD_VAR -> () -> loadVariable(instruction.getName());
@@ -104,6 +94,74 @@ public class VirtualMachine {
             case PRINTLN -> this::printLnOp;
             default -> throw new IllegalArgumentException("Unknown instruction type: " + instruction.getType());
         };
+    }
+
+    private CodeBlock findBlock(Integer pc) {
+        for (var block : blocks) {
+            if (block.getStart() >= pc &&  pc <= block.getEnd()) {
+                return block;
+            }
+        }
+        return null;
+    }
+
+    private Stack<Long> getCurrentStack() {
+        return stackStack.peek();
+    }
+
+    private Boolean isBranch(InstructionType type) {
+        return switch (type) {
+            case CALL, RETURN, JUMP, JUMP_IF_FALSE, FUN, END_FUN, LABEL -> true;
+            default -> false;
+        };
+    }
+
+    private void searchLabels(List<Instruction> instructions) {
+        boolean funFlag = false;
+        FunctionInfo info = null;
+
+        CodeBlock block = null;
+
+        for (int i = 0; i < instructions.size(); i++) {
+            Instruction instruction = instructions.get(i);
+
+            if (instruction.getType().equals(InstructionType.LABEL)) {
+                manager.makeLabel(instruction.getName(), i);
+            }
+
+            if (!isBranch(instruction.getType())) {
+                if (block == null) {
+                    block = new CodeBlock();
+                    block.setStart(i);
+                }
+                block.getInstructions().add(instruction);
+            } else {
+                if (block != null) {
+                    block.setEnd(i - 1);
+                    blocks.add(block);
+                    block = null;
+                }
+            }
+
+            if (instruction.getType().equals(InstructionType.FUN)) {
+                if (funFlag) {
+                    throw new IllegalArgumentException("You cannot declare any function inside a function");
+                }
+                funFlag = true;
+                info = new FunctionInfo(instruction.getName(), i + 1, instruction.getArguments());
+                functions.put(instruction.getName(), info);
+            }
+
+            if (instruction.getType().equals(InstructionType.END_FUN)) {
+                funFlag = false;
+                Objects.requireNonNull(info).setEnd(i + 1);
+            }
+        }
+
+        if (block != null) {
+            block.setEnd(instructions.size() - 1);
+            blocks.add(block);
+        }
     }
 
     private void push(Long value) {
